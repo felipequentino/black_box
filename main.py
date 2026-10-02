@@ -9,8 +9,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from load_dotenv import load_dotenv
-load_dotenv()  
+ 
 # ---------------------------------------------------------------------------
 # Configuração (tudo vem das variáveis de ambiente do Railway)
 # ---------------------------------------------------------------------------
