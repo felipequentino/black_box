@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>caixa-preta</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬛</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #000000;
+    --ink: #f2f2ee;
+    --dim: rgba(242, 242, 238, .52);
+    --faint: rgba(242, 242, 238, .16);
+    --arc: #8bebff;
+    --brass: #c4a46a;
+    --fault: #ff4d5e;
+    --s: clamp(104px, 28vw, 148px);
+    --l: calc(var(--s) * .18);
+    --half: calc(var(--s) / 2);
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--void); color: var(--ink); }
+  body {
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.45;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+  #ceu { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  header, main { position: relative; z-index: 1; width: 100%; max-width: 480px; }
+
+  header { text-align: center; }
+  h1 { font-weight: 500; font-size: 26px; letter-spacing: -.01em; margin: 6px 0 0; }
+  header p { margin: 6px 0 0; color: var(--dim); font-style: italic; font-size: 13px; }
+
+  /* ---------- palco ---------- */
+  .palco {
+    position: relative; z-index: 1;
+    height: calc(var(--s) * 2.75);
+    width: 100%;
+    display: grid; place-items: end center;
+    perspective: 900px;
+    padding-bottom: calc(var(--s) * .32);
+  }
+  .bob { transform-style: preserve-3d; animation: bob 3.4s ease-in-out infinite; }
+  .tremor { transform-style: preserve-3d; }
+  .tilt { transform-style: preserve-3d; transform: rotateX(-24deg); }
+  .caixa {
+    position: relative; width: var(--s); height: var(--s);
+    transform-style: preserve-3d;
+    animation: yaw 14s ease-in-out infinite;
+  }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+  @keyframes yaw { 0%, 100% { transform: rotateY(-38deg); } 50% { transform: rotateY(-26deg); } }
+
+  .face {
+    position: absolute; left: 0; top: 0;
+    width: var(--s); height: var(--s);
+    background: #000;
+    border: 1px solid rgba(196, 164, 106, .38);
+  }
+  .corpo { top: var(--l); height: calc(var(--s) - var(--l)); }
+  .frente   { transform: translateZ(var(--half)); background: linear-gradient(170deg, #121214, #000 65%); }
+  .tras     { transform: rotateY(180deg) translateZ(var(--half)); }
+  .direita  { transform: rotateY(90deg) translateZ(var(--half)); background: linear-gradient(170deg, #070708, #000 70%); }
+  .esquerda { transform: rotateY(-90deg) translateZ(var(--half)); background: linear-gradient(170deg, #0d0d0f, #000 70%); }
+  .fundo    { transform: rotateX(-90deg) translateZ(var(--half)); }
+
+  .tampa {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    transform-origin: 50% 0 calc(var(--s) / -2);
+  }
+  .t-topo     { transform: rotateX(90deg) translateZ(var(--half)); background: radial-gradient(circle at 50% 50%, #17171a, #000 70%); }
+  .t-aba      { height: var(--l); }
+  .t-frente   { transform: translateZ(var(--half)); background: #0c0c0e; }
+  .t-tras     { transform: rotateY(180deg) translateZ(var(--half)); }
+  .t-direita  { transform: rotateY(90deg) translateZ(var(--half)); background: #050506; }
+  .t-esquerda { transform: rotateY(-90deg) translateZ(var(--half)); background: #09090a; }
+
+  .runa { position: absolute; inset: 14%; width: 72%; height: 72%; overflow: visible; }
+  .runa * { fill: none; stroke: var(--runa, rgba(242, 242, 238, .13)); stroke-width: 1.4; transition: stroke .4s; }
+  .frente .runa { inset: 12% 18%; width: 64%; height: 76%; }
+
+  .feixe {
+    position: absolute;
+    left: calc(var(--half) - var(--s) * .2);
+    width: calc(var(--s) * .4);
+    top: calc(var(--s) * -1.25);
+    height: calc(var(--s) * 2.2);
+    background: linear-gradient(to top, rgba(139, 235, 255, .95), rgba(139, 235, 255, .35) 40%, rgba(139, 235, 255, 0));
+    filter: blur(7px);
+    opacity: 0;
+    transform-origin: 50% 100%;
+    transition: opacity .5s, transform .9s cubic-bezier(.2, .8, .2, 1);
+    pointer-events: none;
+  }
+  .feixe.f2 { transform: rotateY(90deg); }
+  .brilho {
+    position: absolute; inset: 0;
+    transform: rotateX(90deg) translateZ(calc(var(--half) - 4px));
+    background: radial-gradient(circle, rgba(139, 235, 255, .95), rgba(139, 235, 255, 0) 62%);
+    opacity: 0; transition: opacity .4s;
+  }
+
+  .sombra {
+    position: absolute; bottom: 0; left: 50%;
+    width: calc(var(--s) * 1.5); height: calc(var(--s) * .22);
+    margin-left: calc(var(--s) * -.75);
+    background: radial-gradient(closest-side, rgba(139, 235, 255, .14), rgba(139, 235, 255, 0));
+    animation: sombra 3.4s ease-in-out infinite;
+  }
+  @keyframes sombra { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(.82); opacity: .55; } }
+
+  /* ---------- estados ---------- */
+  .palco[data-estado="carregando"] .tremor { animation: vibra .09s linear infinite; }
+  .palco[data-estado="carregando"],
+  .palco[data-estado="forcando"],
+  .palco[data-estado="aberta"] { --runa: var(--arc); }
+  .palco[data-estado="carregando"] .runa,
+  .palco[data-estado="forcando"] .runa,
+  .palco[data-estado="aberta"] .runa { filter: drop-shadow(0 0 4px var(--arc)); }
+
+  .palco[data-estado="forcando"] .tampa { animation: forca .9s ease-in-out forwards; }
+  .palco[data-estado="forcando"] .tremor { animation: vibra .07s linear infinite; }
+  .palco[data-estado="forcando"] .brilho { opacity: .8; }
+  .palco[data-estado="forcando"] .feixe { opacity: .45; }
+
+  .palco[data-estado="negada"] { --runa: var(--fault); }
+  .palco[data-estado="negada"] .tampa { animation: bate .42s cubic-bezier(.7, 0, .9, .5) forwards; }
+  .palco[data-estado="negada"] .tremor { animation: sacode .5s .3s ease-out; }
+
+  .palco[data-estado="aberta"] .tampa { animation: solta 1.3s cubic-bezier(.2, .8, .2, 1) forwards; }
+  .palco[data-estado="aberta"] .brilho { opacity: 1; }
+  .palco[data-estado="aberta"] .feixe { opacity: 1; }
+  .palco[data-estado="aberta"] .sombra { background: radial-gradient(closest-side, rgba(139, 235, 255, .35), rgba(139, 235, 255, 0)); }
+
+  @keyframes vibra { 0% { transform: translate(0, 0); } 25% { transform: translate(.8px, -.6px); } 50% { transform: translate(-.7px, .5px); } 75% { transform: translate(.5px, .7px); } 100% { transform: translate(0, 0); } }
+  @keyframes forca {
+    0% { transform: rotateX(0); } 35% { transform: rotateX(24deg); } 48% { transform: rotateX(19deg); }
+    62% { transform: rotateX(29deg); } 78% { transform: rotateX(23deg); } 100% { transform: rotateX(27deg); }
+  }
+  @keyframes bate { 0% { transform: rotateX(27deg); } 70% { transform: rotateX(0); } 84% { transform: rotateX(5deg); } 100% { transform: rotateX(0); } }
+  @keyframes sacode {
+    0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); } 80% { transform: translateX(2px); }
+  }
+  @keyframes solta { 0% { transform: rotateX(27deg); } 100% { transform: rotateX(116deg); } }
+
+  .faisca {
+    position: absolute; left: 50%; bottom: calc(var(--s) * 1.2);
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--arc); box-shadow: 0 0 6px var(--arc);
+    animation: voa var(--d) cubic-bezier(.15, .7, .3, 1) forwards;
+    pointer-events: none;
+  }
+  @keyframes voa { from { transform: translate(0, 0); opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+
+  /* ---------- painel ---------- */
+  main { display: grid; gap: 22px; margin-top: 8px; }
+  form { margin: 0; }
+  label { display: block; color: var(--dim); font-style: italic; font-size: 13px; margin-bottom: 4px; }
+  .linha { display: flex; gap: 10px; align-items: center; }
+  input {
+    flex: 1; min-width: 0;
+    font: 500 16px/1.2 var(--mono); color: var(--ink);
+    background: transparent;
+    border: 0; border-bottom: 1px solid rgba(242, 242, 238, .28);
+    padding: 10px 2px; border-radius: 0;
+    transition: border-color .2s;
+  }
+  input::placeholder { color: rgba(242, 242, 238, .25); }
+  input:focus { outline: none; border-bottom-color: var(--arc); }
+  button {
+    font: 400 14px/1 var(--mono); color: var(--ink);
+    background: transparent; cursor: pointer;
+    border: 1px solid rgba(242, 242, 238, .3); border-radius: 999px;
+    padding: 10px 18px; white-space: nowrap;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+  button:hover { border-color: var(--ink); }
+  button:focus-visible { outline: 2px solid var(--arc); outline-offset: 3px; }
+  input:focus-visible { outline: none; }
+  button:disabled { opacity: .4; cursor: default; }
+  .abrir { color: var(--brass); border-color: rgba(196, 164, 106, .55); }
+  .abrir:hover { border-color: var(--brass); background: rgba(196, 164, 106, .08); }
+
+  .saida-bloco { border-top: 1px solid var(--faint); padding-top: 14px; }
+  .saida-linha { display: flex; gap: 12px; align-items: flex-start; }
+  output {
+    flex: 1; min-width: 0;
+    font: 400 17px/1.5 var(--mono); color: var(--arc);
+    word-break: break-all; min-height: 1.5em;
+  }
+  output.vazia { color: rgba(242, 242, 238, .25); }
+  .copiar { font-size: 13px; padding: 6px 12px; }
+
+  .historico { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; }
+  .historico button {
+    all: unset; cursor: pointer; display: block; width: 100%;
+    font: 400 13px/1.5 var(--mono); color: var(--dim);
+    word-break: break-all; border-radius: 4px;
+  }
+  .historico button:hover { color: var(--ink); }
+  .historico button:focus-visible { outline: 1px solid var(--arc); outline-offset: 2px; }
+  .historico b { font-weight: 500; color: var(--ink); }
+
+  .chave-bloco { border-top: 1px solid var(--faint); padding-top: 14px; }
+  .status { min-height: 1.45em; margin: 8px 0 0; font-size: 13px; font-style: italic; color: var(--dim); }
+  .status.erro { color: var(--fault); }
+
+  footer { width: 100%; max-width: 480px; margin-top: auto; padding-top: 28px; text-align: center; color: var(--dim); font-size: 12px; }
+
+  .segredo {
+    border: 1px solid rgba(139, 235, 255, .45); border-radius: 14px;
+    padding: 18px 20px; text-align: center;
+    background: rgba(139, 235, 255, .05);
+    animation: surge .8s ease-out;
+  }
+  .segredo p { margin: 0 0 14px; font-size: 16px; line-height: 1.6; }
+  @keyframes surge { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bob, .caixa, .sombra, .tremor { animation: none !important; }
+    .caixa { transform: rotateY(-32deg); }
+    .faisca { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="ceu" aria-hidden="true"></canvas>
+
+<header>
+  <h1>caixa-preta</h1>
+</header>
+
+<div class="palco" id="palco" data-estado="parada" aria-hidden="true">
+  <div class="bob"><div class="tremor"><div class="tilt">
+    <div class="caixa">
+      <div class="face fundo"></div>
+      <div class="brilho"></div>
+      <div class="feixe f1"></div>
+      <div class="feixe f2"></div>
+      <div class="face corpo tras"></div>
+      <div class="face corpo esquerda"></div>
+      <div class="face corpo direita"></div>
+      <div class="face corpo frente">
+        <svg class="runa" viewBox="0 0 100 100">
+          <path d="M50 8 L86 50 L50 92 L14 50 Z"/>
+          <circle cx="50" cy="50" r="17"/>
+          <path d="M50 22 V33 M50 67 V78 M24 50 H33 M67 50 H76"/>
+        </svg>
+      </div>
+      <div class="tampa">
+        <div class="face t-aba t-tras"></div>
+        <div class="face t-aba t-esquerda"></div>
+        <div class="face t-aba t-direita"></div>
+        <div class="face t-aba t-frente"></div>
+        <div class="face t-topo">
+          <svg class="runa" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="38"/>
+            <path d="M50 12 L83 69 H17 Z"/>
+            <circle cx="50" cy="50" r="6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="sombra"></div>
+</div>
+
+<main>
+  <form id="form-palavra" autocomplete="off">
+    <label for="palavra">Palavra</label>
+    <div class="linha">
+      <input id="palavra" name="palavra" maxlength="40" spellcheck="false" autocapitalize="off" placeholder="" required>
+      <button type="submit">Enviar</button>
+    </div>
+  </form>
+
+  <section class="saida-bloco" aria-label="Saída da caixa">
+    <label>Saída</label>
+    <div class="saida-linha">
+      <output id="saida" class="vazia" aria-live="polite"></output>
+      <button type="button" class="copiar" id="copiar" disabled>Copiar</button>
+    </div>
+    <ol class="historico" id="historico"></ol>
+  </section>
+
+  <section class="chave-bloco" id="chave-bloco">
+    <form id="form-chave" autocomplete="off">
+      <label for="chave">Chave</label>
+      <div class="linha">
+        <input id="chave" name="chave" maxlength="40" spellcheck="false" autocapitalize="off" placeholder="" required>
+        <button type="submit" class="abrir" id="botao-abrir">Tentar abrir</button>
+      </div>
+    </form>
+    <p class="status" id="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<footer>don't eat the yellow snow!</footer>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const palco = $("palco");
+  const saida = $("saida");
+  const status = $("status");
+  const historico = $("historico");
+  const reduzir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const espera = (ms) => new Promise((r) => setTimeout(r, reduzir ? Math.min(ms, 150) : ms));
+  let ocupada = false;
+  let errosChave = 0;
+
+  async function chamar(rota, corpo) {
+    const resp = await fetch(rota, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(corpo),
+    });
+    let dados = {};
+    try { dados = await resp.json(); } catch (_) {}
+    if (!resp.ok) {
+      const msg = typeof dados.detail === "string" ? dados.detail : "A caixa não respondeu. Tente de novo.";
+      throw new Error(msg);
+    }
+    return dados;
+  }
+
+  function avisar(texto, erro = false) {
+    status.textContent = texto;
+    status.classList.toggle("erro", erro);
+  }
+
+  // ----- palavra -> misterio -----
+  const entradas = [];
+  function desenharHistorico() {
+    historico.replaceChildren(...entradas.slice(1, 7).map(({ entrada, saida: s }) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      const e = document.createElement("b");
+      e.textContent = entrada;
+      b.append(e, document.createTextNode("  " + s));
+      b.addEventListener("click", () => { $("palavra").value = entrada; $("palavra").focus(); });
+      li.append(b);
+      return li;
+    }));
+  }
+
+  $("form-palavra").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const palavra = $("palavra").value;
+    try {
+      const dados = await chamar("/api/misterio", { palavra });
+      saida.textContent = dados.saida;
+      saida.classList.remove("vazia");
+      $("copiar").disabled = false;
+      entradas.unshift(dados);
+      desenharHistorico();
+      $("palavra").select();
+    } catch (e) {
+      saida.textContent = e.message;
+      saida.classList.add("vazia");
+      $("copiar").disabled = true;
+    }
+  });
+
+  $("copiar").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(saida.textContent);
+      $("copiar").textContent = "Copiado";
+      setTimeout(() => ($("copiar").textContent = "Copiar"), 1400);
+    } catch (_) {}
+  });
+
+  // ----- chave -> abrir -----
+  function faiscas() {
+    if (reduzir) return;
+    for (let i = 0; i < 38; i++) {
+      const f = document.createElement("span");
+      f.className = "faisca";
+      const ang = (-Math.PI / 2) + (Math.random() - .5) * 1.9;
+      const dist = 90 + Math.random() * 170;
+      f.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+      f.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+      f.style.setProperty("--d", (1.1 + Math.random() * 1.2).toFixed(2) + "s");
+      palco.append(f);
+      setTimeout(() => f.remove(), 2600);
+    }
+  }
+
+  function mostrarSegredo(mensagem) {
+    const bloco = document.createElement("div");
+    bloco.className = "segredo";
+    const p = document.createElement("p");
+    p.textContent = mensagem;
+    const fechar = document.createElement("button");
+    fechar.type = "button";
+    fechar.textContent = "Fechar a caixa";
+    fechar.addEventListener("click", () => {
+      bloco.remove();
+      $("form-chave").hidden = false;
+      palco.dataset.estado = "parada";
+      avisar("");
+      $("chave").value = "";
+    });
+    bloco.append(p, fechar);
+    $("form-chave").hidden = true;
+    $("chave-bloco").prepend(bloco);
+    fechar.focus();
+  }
+
+  $("form-chave").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    if (ocupada) return;
+    ocupada = true;
+    $("botao-abrir").disabled = true;
+    avisar("A caixa está testando a chave…");
+
+    palco.dataset.estado = "carregando";
+    const pedido = chamar("/api/abrir", { chave: $("chave").value }).then(
+      (d) => ({ ok: true, d }), (e) => ({ ok: false, e })
+    );
+    await espera(700);
+    palco.dataset.estado = "forcando";
+    const [r] = await Promise.all([pedido, espera(1000)]);
+
+    if (r.ok && r.d.aberta) {
+      errosChave = 0;
+      palco.dataset.estado = "aberta";
+      faiscas();
+      avisar("");
+      await espera(700);
+      mostrarSegredo(r.d.mensagem);
+    } else {
+      palco.dataset.estado = "negada";
+      if (r.ok) {
+        errosChave += 1;
+        if (errosChave === 5) {
+          avisar("ainda não, continue tentando!", true);
+        } else if (errosChave === 10) {
+          avisar("it's ok I trust in you! don't give up! 🦖🦕.", true);
+          errosChave = 0;
+        } else {
+          avisar("a chave não é esta...", true);
+        }
+      } else {
+        avisar(r.e.message, true);
+      }
+      await espera(950);
+      palco.dataset.estado = "parada";
+      $("chave").select();
+    }
+    $("botao-abrir").disabled = false;
+    ocupada = false;
+  });
+
+  // ----- céu de pontos -----
+  const ceu = $("ceu");
+  const ctx = ceu.getContext("2d");
+  let pontos = [];
+  function preparar() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    ceu.width = innerWidth * dpr;
+    ceu.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round((innerWidth * innerHeight) / 7000);
+    pontos = Array.from({ length: n }, () => ({
+      x: Math.random() * innerWidth,
+      y: Math.random() * innerHeight,
+      r: Math.random() < .9 ? .35 + Math.random() * .6 : 1 + Math.random() * .6,
+      a: .15 + Math.random() * .6,
+      f: .3 + Math.random() * 1.2,
+      o: Math.random() * Math.PI * 2,
+    }));
+  }
+  function desenhar(t) {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const p of pontos) {
+      const brilho = reduzir ? p.a : p.a * (.55 + .45 * Math.sin(t / 1000 * p.f + p.o));
+      ctx.globalAlpha = brilho;
+      ctx.fillStyle = "#f2f2ee";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (!reduzir) requestAnimationFrame(desenhar);
+  }
+  addEventListener("resize", () => { preparar(); if (reduzir) desenhar(0); });
+  preparar();
+  requestAnimationFrame(desenhar);
+})();
+</script>
+</body>
+</html>
